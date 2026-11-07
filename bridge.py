@@ -7,6 +7,8 @@ import main
 import queue
 import ui_events
 import config
+import json, os, tempfile
+HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chat_history.json")
 priority = config.Priority()
 print(priority.warning)
 print(priority.critical)
@@ -57,6 +59,24 @@ class API:
             })
         return {"messages": result}
 
+    # chat history persistence (stored next to bridge.py)
+    def load_conversations(self):
+        try:
+            with open(HISTORY_FILE, encoding="utf-8") as f:
+                return f.read()
+        except OSError:
+            return "[]"
+
+    def save_conversations(self, data):
+        try:
+            json.loads(data)  # validate before writing
+            fd, tmp = tempfile.mkstemp(dir=os.path.dirname(HISTORY_FILE) or ".")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(data)
+            os.replace(tmp, HISTORY_FILE)  # atomic write
+        except Exception as e:
+            print("save_conversations failed:", e)
+
     # start mic if requested
     def mic_start(self):
         ui_events.mic_command = True
@@ -83,8 +103,9 @@ class Window:
                 self.window = webview.create_window(
                     "AI Assistant",
                     "gui/index.html",
-                    width=500,
-                    height=450,
+                    width=900,
+                    height=700,
+                    min_size=(420, 420),
                     js_api=api
                 )
                 webview.start(gui='edgechromium', debug=False)

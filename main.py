@@ -633,4 +633,4 @@ def start_main():
     # print(f"Alive threads: threading.enumerate()")
     print("Exiting...")
 
-start_main()
+# start_main()
